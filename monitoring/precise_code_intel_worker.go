@@ -11,6 +11,19 @@ func PreciseCodeIntelWorker() *Container {
 				Rows: []Row{
 					{
 						{
+							Name:            "queue_size",
+							Description:     "queue size",
+							Query:           `max(src_precise_code_intel_worker_queue_size)`,
+							DataMayNotExist: true,
+							Warning:         Alert{LessOrEqual: 25},
+							Critical:        Alert{LessOrEqual: 15},
+							PanelOptions:    PanelOptions().LegendFormat("{{instance}}"),
+							PossibleSolutions: `
+								TODO - update this
+								- **Provision more disk space:** Sourcegraph will begin deleting least-used repository clones at 10% disk space remaining which may result in decreased performance, users having to wait for repositories to clone, etc.
+							`,
+						},
+						{
 							Name:              "job_total",
 							Description:       "job total every 5m",
 							Query:             `sum(increase(src_precise_code_intel_worker_jobs_total[5m]))`,
@@ -31,7 +44,6 @@ func PreciseCodeIntelWorker() *Container {
 							PossibleSolutions: "none",
 						},
 					},
-					// TODO - job queue size
 					// TODO - bundle manager stuff
 					// TODO - gitserver
 					{

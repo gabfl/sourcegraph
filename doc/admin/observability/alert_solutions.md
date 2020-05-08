@@ -459,6 +459,20 @@ TODO - update this
 - **Kubernetes:** Consider increasing CPU limits in the the relevant `Deployment.yaml`.
 - **Docker Compose:** Consider increasing `cpus:` of the precise-code-intel-bundle-manager container in `docker-compose.yml`.
 
+# precise-code-intel-worker: queue_size
+
+**Descriptions:**
+
+- _precise-code-intel-worker: less than 25 queue size_
+
+
+- _precise-code-intel-worker: less than 15 queue size_
+
+**Possible solutions:**
+
+TODO - update this
+- **Provision more disk space:** Sourcegraph will begin deleting least-used repository clones at 10% disk space remaining which may result in decreased performance, users having to wait for repositories to clone, etc.
+
 # precise-code-intel-worker: frontend_internal_api_error_responses
 
 **Descriptions:**

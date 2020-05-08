@@ -41,6 +41,7 @@ func main() {
 	}
 
 	db := db.NewObserved(mustInitializeDatabase(), observationContext, "precise_code_intel_worker")
+	MustRegisterQueueMonitor(observationContext.Registerer, db)
 	workerMetrics := worker.NewWorkerMetrics(prometheus.DefaultRegisterer)
 
 	worker := worker.Worker{
