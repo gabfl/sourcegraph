@@ -72,7 +72,7 @@ func PreciseCodeIntelBundleManager() *Container {
 						{
 							Name:              "cache_cost",
 							Description:       "cache cost",
-							Query:             `src_ristretto_cache_cost`,
+							Query:             `src_cache_cost`,
 							DataMayNotExist:   true,
 							Warning:           Alert{GreaterOrEqual: 5},
 							Critical:          Alert{GreaterOrEqual: 20},
@@ -82,7 +82,7 @@ func PreciseCodeIntelBundleManager() *Container {
 						{
 							Name:              "cache_hits",
 							Description:       "cache hits every 5m",
-							Query:             `increase(src_ristretto_cache_hits[5m])`,
+							Query:             `increase(src_cache_hits[5m])`,
 							DataMayNotExist:   true,
 							Warning:           Alert{GreaterOrEqual: 5},
 							Critical:          Alert{GreaterOrEqual: 20},
@@ -92,7 +92,7 @@ func PreciseCodeIntelBundleManager() *Container {
 						{
 							Name:              "cache_misses",
 							Description:       "cache misses every 5m",
-							Query:             `increase(src_ristretto_cache_misses[5m])`,
+							Query:             `increase(src_cache_misses[5m])`,
 							DataMayNotExist:   true,
 							Warning:           Alert{GreaterOrEqual: 5},
 							Critical:          Alert{GreaterOrEqual: 20},
