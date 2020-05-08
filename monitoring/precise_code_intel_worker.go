@@ -11,31 +11,28 @@ func PreciseCodeIntelWorker() *Container {
 				Rows: []Row{
 					{
 						{
-							Name:            "queue_size",
-							Description:     "queue size",
-							Query:           `max(src_precise_code_intel_worker_queue_size)`,
-							DataMayNotExist: true,
-							Warning:         Alert{LessOrEqual: 25},
-							Critical:        Alert{LessOrEqual: 15},
-							PanelOptions:    PanelOptions().LegendFormat("{{instance}}"),
-							PossibleSolutions: `
-								TODO - update this
-								- **Provision more disk space:** Sourcegraph will begin deleting least-used repository clones at 10% disk space remaining which may result in decreased performance, users having to wait for repositories to clone, etc.
-							`,
-						},
-						{
-							Name:              "job_total",
-							Description:       "job total every 5m",
-							Query:             `sum(increase(src_precise_code_intel_worker_jobs_total[5m]))`,
+							Name:              "upload_queue_size",
+							Description:       "upload queue size",
+							Query:             `max(src_precise_code_intel_worker_queue_size)`,
 							DataMayNotExist:   true,
-							Warning:           Alert{GreaterOrEqual: 5},
-							Critical:          Alert{GreaterOrEqual: 20},
-							PanelOptions:      PanelOptions().LegendFormat("errors"),
+							Warning:           Alert{GreaterOrEqual: 100},
+							Critical:          Alert{GreaterOrEqual: 200},
+							PanelOptions:      PanelOptions().LegendFormat("uploads queued for processing"),
 							PossibleSolutions: "none",
 						},
 						{
-							Name:              "job_errors",
-							Description:       "job errors every 5m",
+							Name:              "upload_processed",
+							Description:       "total uploads processed every 5m",
+							Query:             `sum(increase(src_precise_code_intel_worker_jobs_total[5m]))`,
+							DataMayNotExist:   true,
+							Warning:           Alert{LessOrEqual: -1},
+							PanelOptions:      PanelOptions().LegendFormat("uploads processed"),
+							PossibleSolutions: "none",
+						},
+						{
+							Name:        "upload_process_errors",
+							Description: "upload process errors every 5m",
+							// TODO(efritz) - ensure these differentiate malformed dumps and system errors
 							Query:             `sum(increase(src_precise_code_intel_worker_jobs_errors_total[5m]))`,
 							DataMayNotExist:   true,
 							Warning:           Alert{GreaterOrEqual: 5},
@@ -44,27 +41,27 @@ func PreciseCodeIntelWorker() *Container {
 							PossibleSolutions: "none",
 						},
 					},
-					// TODO - bundle manager stuff
-					// TODO - gitserver
+					// TODO(efritz) - add bundle manager request meter
+					// TODO(efritz) - add gitserver request meter
 					{
 						{
 							Name:        "99th_percentile_db_duration",
 							Description: "99th percentile successful db query duration over 5m",
-							// TODO - by op?
-							Query:             `histogram_quantile(0.99, sum by (le)(rate(src_precise_code_intel_worker_db_duration_seconds_bucket[5m])))`,
+							// TODO(efritz) - ensure these exclude error durations
+							Query:             `histogram_quantile(0.99, sum by (le,op)(rate(src_precise_code_intel_worker_db_duration_seconds_bucket[5m])))`,
 							DataMayNotExist:   true,
 							Warning:           Alert{GreaterOrEqual: 20},
-							PanelOptions:      PanelOptions().LegendFormat("duration").Unit(Seconds),
+							PanelOptions:      PanelOptions().LegendFormat("{{op}}").Unit(Seconds),
 							PossibleSolutions: "none",
 						},
 						{
 							Name:              "db_errors",
 							Description:       "db errors every 5m",
-							Query:             `sum(sum by (op)(increase(src_precise_code_intel_worker_db_errors_total[5m])))`,
+							Query:             `sum by (op)(increase(src_precise_code_intel_worker_db_errors_total[5m]))`,
 							DataMayNotExist:   true,
 							Warning:           Alert{GreaterOrEqual: 5},
 							Critical:          Alert{GreaterOrEqual: 20},
-							PanelOptions:      PanelOptions().LegendFormat("errors"),
+							PanelOptions:      PanelOptions().LegendFormat("{{op}}"),
 							PossibleSolutions: "none",
 						},
 					},

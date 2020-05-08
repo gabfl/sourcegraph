@@ -51,11 +51,7 @@ func main() {
 		PollInterval:        pollInterval,
 		Metrics:             workerMetrics,
 	}
-	go func() {
-		if err := worker.Start(); err != nil {
-			log.Fatalf("worker encountered a critical error: %s", err)
-		}
-	}()
+	go worker.Start()
 
 	go debugserver.Start()
 	waitForSignal()

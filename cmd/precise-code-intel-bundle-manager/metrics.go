@@ -12,7 +12,7 @@ func MustRegisterCacheMonitor(r prometheus.Registerer, cacheName string, metrics
 	}
 
 	cacheCost := prometheus.NewGaugeFunc(prometheus.GaugeOpts{
-		Name:        "src_cache_cache_cost",
+		Name:        "src_cache_cost",
 		Help:        "Current cost of the cache.",
 		ConstLabels: prometheus.Labels{"cache": cacheName},
 	}, func() float64 {
@@ -20,7 +20,7 @@ func MustRegisterCacheMonitor(r prometheus.Registerer, cacheName string, metrics
 	})
 
 	cacheHits := prometheus.NewGaugeFunc(prometheus.GaugeOpts{
-		Name:        "src_cache_cache_hits",
+		Name:        "src_cache_hits",
 		Help:        "Total number of cache hits.",
 		ConstLabels: prometheus.Labels{"cache": cacheName},
 	}, func() float64 {
@@ -28,7 +28,7 @@ func MustRegisterCacheMonitor(r prometheus.Registerer, cacheName string, metrics
 	})
 
 	cacheMisses := prometheus.NewGaugeFunc(prometheus.GaugeOpts{
-		Name:        "src_cache_cache_misses",
+		Name:        "src_cache_misses",
 		Help:        "Total number of cache misses.",
 		ConstLabels: prometheus.Labels{"cache": cacheName},
 	}, func() float64 {
