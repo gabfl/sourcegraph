@@ -147,6 +147,12 @@ func makeSearchCondition(term string) *sqlf.Query {
 	return sqlf.Sprintf("(%s)", sqlf.Join(termConds, " OR "))
 }
 
+// QueueSize returns the number of uploads in the queued state.
+func (db *dbImpl) QueueSize(ctx context.Context) (int, error) {
+	count, _, err := scanFirstInt(db.query(ctx, sqlf.Sprintf(`SELECT COUNT(*) FROM lsif_uploads WHERE state = 'queued'`)))
+	return count, err
+}
+
 // Enqueue inserts a new upload with a "queued" state and returns its identifier.
 func (db *dbImpl) Enqueue(ctx context.Context, commit, root, tracingContext string, repositoryID int, indexerName string) (int, error) {
 	id, _, err := scanFirstInt(db.query(

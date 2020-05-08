@@ -36,6 +36,9 @@ type DB interface {
 	// GetUploadsByRepo returns a list of uploads for a particular repo and the total count of records matching the given conditions.
 	GetUploadsByRepo(ctx context.Context, repositoryID int, state, term string, visibleAtTip bool, limit, offset int) ([]Upload, int, error)
 
+	// QueueSize returns the number of uploads in the queued state.
+	QueueSize(ctx context.Context) (int, error)
+
 	// Enqueue inserts a new upload with a "queued" state and returns its identifier.
 	Enqueue(ctx context.Context, commit, root, tracingContext string, repositoryID int, indexerName string) (int, error)
 

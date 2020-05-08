@@ -21,27 +21,12 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/codeintel/gitserver"
 )
 
-type WorkerOpts struct {
+type Worker struct {
 	DB                  db.DB
 	BundleManagerClient bundles.BundleManagerClient
 	GitserverClient     gitserver.Client
 	PollInterval        time.Duration
-}
-
-type Worker struct {
-	db                  db.DB
-	bundleManagerClient bundles.BundleManagerClient
-	gitserverClient     gitserver.Client
-	pollInterval        time.Duration
-}
-
-func New(opts WorkerOpts) *Worker {
-	return &Worker{
-		db:                  opts.DB,
-		bundleManagerClient: opts.BundleManagerClient,
-		gitserverClient:     opts.GitserverClient,
-		pollInterval:        opts.PollInterval,
-	}
+	Metrics             WorkerMetrics
 }
 
 func (w *Worker) Start() error {
@@ -49,7 +34,7 @@ func (w *Worker) Start() error {
 		if ok, err := w.dequeueAndProcess(context.Background()); err != nil {
 			return err
 		} else if !ok {
-			time.Sleep(w.pollInterval)
+			time.Sleep(w.PollInterval)
 		}
 	}
 }
@@ -59,7 +44,9 @@ func (w *Worker) Start() error {
 // Processing errors are only written to the upload record and are not expected to be handled
 // by the calling function.
 func (w *Worker) dequeueAndProcess(ctx context.Context) (_ bool, err error) {
-	upload, jobHandle, ok, err := w.db.Dequeue(ctx)
+	start := time.Now()
+
+	upload, jobHandle, ok, err := w.DB.Dequeue(ctx)
 	if err != nil || !ok {
 		return false, errors.Wrap(err, "db.Dequeue")
 	}
@@ -67,9 +54,11 @@ func (w *Worker) dequeueAndProcess(ctx context.Context) (_ bool, err error) {
 		if closeErr := jobHandle.Done(err); closeErr != nil {
 			err = multierror.Append(err, closeErr)
 		}
+
+		w.Metrics.Jobs.Observe(time.Since(start).Seconds(), 1, &err)
 	}()
 
-	if err = process(ctx, jobHandle.DB(), w.bundleManagerClient, w.gitserverClient, upload, jobHandle); err != nil {
+	if err = process(ctx, jobHandle.DB(), w.BundleManagerClient, w.GitserverClient, upload, jobHandle); err != nil {
 		log15.Warn("Failed to process upload", "id", upload.ID, "err", err)
 
 		if markErr := jobHandle.MarkErrored(ctx, err.Error(), ""); markErr != nil {
@@ -241,6 +230,7 @@ func convert(
 ) (_ []types.Package, _ []types.PackageReference, err error) {
 	groupedBundleData, err := correlation.Correlate(filename, dumpID, root, getChildren)
 	if err != nil {
+		// TODO - tag this kind of error specifically
 		return nil, nil, errors.Wrap(err, "correlation.Correlate")
 	}
 
@@ -250,6 +240,8 @@ func convert(
 
 	return groupedBundleData.Packages, groupedBundleData.PackageReferences, nil
 }
+
+// TODO - observe writers
 
 // write commits the correlated data to disk.
 func write(ctx context.Context, filename string, groupedBundleData *correlation.GroupedBundleData) error {

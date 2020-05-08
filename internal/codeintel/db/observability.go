@@ -14,6 +14,7 @@ type ObservedDB struct {
 	db                                 DB
 	getUploadByIDOperation             *observation.Operation
 	getUploadsByRepoOperation          *observation.Operation
+	queueSizeOperation                 *observation.Operation
 	enqueueOperation                   *observation.Operation
 	dequeueOperation                   *observation.Operation
 	getStatesOperation                 *observation.Operation
@@ -36,15 +37,24 @@ type ObservedDB struct {
 
 var _ DB = &ObservedDB{}
 
-// NewObservedDB wraps the given DB with error logging, Prometheus metrics, and tracing.
-func NewObserved(db DB, observationContext *observation.Context, subsystem string) DB {
-	metrics := metrics.NewOperationMetrics(
+// TODO - document
+func createMetrics(observationContext *observation.Context, subsystem string) *metrics.OperationMetrics {
+	if observationContext.Registerer == nil {
+		return nil
+	}
+
+	return metrics.NewOperationMetrics(
 		observationContext.Registerer,
 		subsystem,
 		"db",
 		metrics.WithLabels("op"),
 		metrics.WithCountHelp("Total number of results returned"),
 	)
+}
+
+// NewObservedDB wraps the given DB with error logging, Prometheus metrics, and tracing.
+func NewObserved(db DB, observationContext *observation.Context, subsystem string) DB {
+	metrics := createMetrics(observationContext, subsystem)
 
 	return &ObservedDB{
 		db: db,
@@ -56,6 +66,11 @@ func NewObserved(db DB, observationContext *observation.Context, subsystem strin
 		getUploadsByRepoOperation: observationContext.Operation(observation.Op{
 			Name:         "DB.GetUploadsByRepo",
 			MetricLabels: []string{"get_uploads_by_repo"},
+			Metrics:      metrics,
+		}),
+		queueSizeOperation: observationContext.Operation(observation.Op{
+			Name:         "DB.QueueSize",
+			MetricLabels: []string{"queue_size"},
 			Metrics:      metrics,
 		}),
 		enqueueOperation: observationContext.Operation(observation.Op{
@@ -177,6 +192,14 @@ func (db *ObservedDB) GetUploadsByRepo(ctx context.Context, repositoryID int, st
 	}()
 
 	return db.db.GetUploadsByRepo(ctx, repositoryID, state, term, visibleAtTip, limit, offset)
+}
+
+// QueueSize  calls into the inner DB and registers the observed results.
+func (db *ObservedDB) QueueSize(ctx context.Context) (_ int, err error) {
+	ctx, endObservation := db.queueSizeOperation.With(ctx, &err, observation.Args{})
+	defer endObservation(1, observation.Args{})
+
+	return db.db.QueueSize(ctx)
 }
 
 // Enqueue calls into the inner DB and registers the observed results.
