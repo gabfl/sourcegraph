@@ -73,8 +73,7 @@ func PreciseCodeIntelBundleManager() *Container {
 							Description:       "cache cost",
 							Query:             `src_cache_cost`,
 							DataMayNotExist:   true,
-							Warning:           Alert{GreaterOrEqual: 5},
-							Critical:          Alert{GreaterOrEqual: 20},
+							Warning:           Alert{LessOrEqual: -1}, // TODO(efritz) - calculate ratio capacity so we can have a sensible alert
 							PanelOptions:      PanelOptions().LegendFormat("{{cache}}"),
 							PossibleSolutions: "none",
 						},
@@ -83,8 +82,7 @@ func PreciseCodeIntelBundleManager() *Container {
 							Description:       "cache hits every 5m",
 							Query:             `increase(src_cache_hits[5m])`,
 							DataMayNotExist:   true,
-							Warning:           Alert{GreaterOrEqual: 5},
-							Critical:          Alert{GreaterOrEqual: 20},
+							Warning:           Alert{LessOrEqual: -1}, // TODO(efritz) - determine alerts
 							PanelOptions:      PanelOptions().LegendFormat("{{cache}}"),
 							PossibleSolutions: "none",
 						},
@@ -93,8 +91,7 @@ func PreciseCodeIntelBundleManager() *Container {
 							Description:       "cache misses every 5m",
 							Query:             `increase(src_cache_misses[5m])`,
 							DataMayNotExist:   true,
-							Warning:           Alert{GreaterOrEqual: 5},
-							Critical:          Alert{GreaterOrEqual: 20},
+							Warning:           Alert{LessOrEqual: -1}, // TODO(efritz) - determine alerts
 							PanelOptions:      PanelOptions().LegendFormat("{{cache}}"),
 							PossibleSolutions: "none",
 						},

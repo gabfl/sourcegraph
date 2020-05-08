@@ -25,7 +25,7 @@ func PreciseCodeIntelWorker() *Container {
 							Description:       "total uploads processed every 5m",
 							Query:             `sum(increase(src_precise_code_intel_worker_jobs_total[5m]))`,
 							DataMayNotExist:   true,
-							Warning:           Alert{LessOrEqual: -1},
+							Warning:           Alert{LessOrEqual: -1}, // TODO(efritz) - determine alerts
 							PanelOptions:      PanelOptions().LegendFormat("uploads processed"),
 							PossibleSolutions: "none",
 						},
