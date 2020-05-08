@@ -169,6 +169,26 @@ func (db *dbImpl) Enqueue(ctx context.Context, commit, root, tracingContext stri
 	return id, nil
 }
 
+// TODO - test
+// MarkComplete updates the state of the upload to complete.
+func (db *dbImpl) MarkComplete(ctx context.Context, id int) (err error) {
+	return db.exec(ctx, sqlf.Sprintf(`
+		UPDATE lsif_uploads
+		SET state = 'completed', finished_at = now()
+		WHERE id = %s
+	`, id))
+}
+
+// TODO - test
+// MarkErrored updates the state of the upload to errored and updates the failure summary data.
+func (db *dbImpl) MarkErrored(ctx context.Context, id int, failureSummary, failureStacktrace string) (err error) {
+	return db.exec(ctx, sqlf.Sprintf(`
+		UPDATE lsif_uploads
+		SET state = 'errored', finished_at = now(), failure_summary = %s, failure_stacktrace = %s
+		WHERE id = %s
+	`, failureSummary, failureStacktrace, id))
+}
+
 // ErrDequeueTransaction occurs when Dequeue is called from inside a transaction.
 var ErrDequeueTransaction = errors.New("unexpected transaction")
 
